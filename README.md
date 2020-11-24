@@ -13,12 +13,13 @@ $ docker run --entrypoint /bin/bash -it -v [path to output directory on host]:/h
 ```
 ## Building Yocto image
 #### Start container and build Yocto with default settings:
-If you made changes to Yocto, skip this.
+*If you made changes to Yocto, skip this.*
 ```sh
 $ docker run --rm -ti -v $PWD/output:/home/yocto/build/tmp/deploy/images yocto-build-env:latest
 ```
 #### Build container after making changes in the *[Making changes to Yocto](Making-changes-to-Yocto-) section:
-If you built yocto with default settings, skip this.
+*If you built yocto with default settings, skip this.*
+
 Start and attach to Docker container if not already inside:
 ```sh
 $ docker start gumstix_docker_image
