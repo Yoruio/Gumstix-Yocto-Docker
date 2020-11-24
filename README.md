@@ -29,5 +29,5 @@ $ docker attach gumstix_docker_image
 Build image from within docker container:
 ```sh
 $ cd /home/yocto
-$ source source poky/oe-init-build-env build && bitbake [image name]
+$ source poky/oe-init-build-env build && bitbake [image name]
 ```
