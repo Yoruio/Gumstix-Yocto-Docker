@@ -1,24 +1,17 @@
 # Gumstix-Yocto-Docker
 This is a Docker image to build gumstix Yocto images in a controlled Linux environment. This image is based on Ubuntu 18.04, using the repo manifest found at https://github.com/Yoruio/yocto-manifest/tree/Yoruio-layers. Current image builds the Dunfell branch of Gumstix images.
 
-## Dockerhub
-To build a Yocto image:
-```sh
-$ docker run --rm -t -v [host output directory]:/yocto/build/tmp/deploy/images -v [host downloads directory]:/yocto/build/downloads -e IMAGE="[image name]" -e MACHINE="[machine name]" -e UID=$(id -u) -e GID=$(id -g) roydu/gumstix-yocto-builder:latest
+### Manually building Docker image from Dockerfile
+***
+**Note:** Building the docker image is optional. Docker will fetch a prebuilt image from dockerhub if an image is not found locally.
+***
+Clone repository with 
 ```
-**[host output directory]:** The directory on the host machine where images will be sent to after the build is completed.
-
-**[host downloads directory]:** A directory on the host machine where downloaded sources will be saved. This is optional if you don't want to reuse sources between builds.
-
-**[machine name]:** Machine that the image will be installed on, i.e. *raspberrypi4-64* or *overo* (default raspberrypi4-64)
-
-**[image name]:** Image(s) that yocto will build, separated by spaces. i.e. *gumstix-console-image packagegroup-gumstix*  (default gumstix-console-image)
-
-## Manually building from Dockerfile
-### Building Docker image
+$ git clone git@github.com:Yoruio/Gumstix-Yocto-Docker.git
+```
 After cloning repository, build image with
 ```sh
-$ docker build --no-cache --tag "yocto-build-env:latest" .
+$ docker build --no-cache --tag "roydu/gumstix-yocto-builder:latest" Gumstix-Yocto-Docker
 ```
 <!---
 ### Making changes to Yocto
@@ -37,7 +30,7 @@ $ docker run --rm -t \
   -e MACHINE=[machine name] \
   -e IMAGE=[image name] \
   -e UID=$(id -u) -e GID=$(id -g) \
-  yocto-build-env:latest
+  roydu/gumstix-yocto-builder:latest
 ```
 **[host output directory]:** The directory on the host machine where images will be sent to after the build is completed.
 
@@ -54,7 +47,7 @@ $ docker run --rm -t \
   -e MACHINE=raspberrypi4-64 \
   -e IMAGE=gumstix-lxqt-image \
   -e UID=$(id -u) -e GID=$(id -g) \
-  yocto-build-env:latest
+  roydu/gumstix-yocto-builder:latest
 ```
 
 <!---
