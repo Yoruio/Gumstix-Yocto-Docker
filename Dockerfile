@@ -34,7 +34,7 @@ RUN chmod a+x repo
 RUN mv repo /usr/local/bin
 
 # Create yocto directory
-RUN mkdir -p $YOCTO_DIR/
+RUN mkdir -p ${YOCTO_DIR}/
 WORKDIR ${YOCTO_DIR}
 
 # Use my layers - TODO: pull request for official gumstix layers
@@ -53,23 +53,31 @@ ENV TEMPLATECONF=meta-gumstix-extras/conf
 ENV MACHINE=raspberrypi4-64
 ENV IMAGE=gumstix-console-image
 
-ENV USER=yocto
-ENV GROUP=yocto
-
 # default UID and GID values - set in docker run using '-e' flag (i.e. docker run -e UID=$(id -u) yocto-build-env:latest)
 ENV UID=1001
 ENV GID=1001
 
+ENV USERNAME=yocto
+ENV GROUP=yocto
+
 # build command
 CMD \
-    # Make group with proper given GID
+    # New user creation and permission changes
     groupadd -g ${GID} ${GROUP} \
-    # Make user with given GID who is a member of newly created group
-    && useradd -g ${GID} -m -s /bin/bash -u ${UID} ${USER} \
-    # Change ownership of yocto directory to newly created user
-    && chown -R ${USER}:${GROUP} ${YOCTO_DIR} \
+    && useradd -g ${GID} -m -s /bin/bash -u ${UID} ${USERNAME} \
+    && chown -R ${USERNAME}:${GROUP} ${YOCTO_DIR}; \
+    # move any old images into timestamped folder (with time of new compile)
+    DATETIME=$(date +%Y%m%d_%H%M%S) \
+    && mkdir -p ${YOCTO_DIR}/build/tmp/deploy/images/old/${DATETIME} \
+    && chown -R ${USERNAME}:${GROUP} ${YOCTO_DIR}/build/tmp/deploy/images/old \
+    && mv ${YOCTO_DIR}/build/tmp/deploy/images/old ${YOCTO_DIR}/build/tmp/deploy/images/.old \
+    && if [ "$(ls ${YOCTO_DIR}/build/tmp/deploy/images/)" ]; \
+        then mv ${YOCTO_DIR}/build/tmp/deploy/images/* ${YOCTO_DIR}/build/tmp/deploy/images/.old/${DATETIME}/ ; \
+        else rm -r ${YOCTO_DIR}/build/tmp/deploy/images/.old/${DATETIME} ; \
+    fi \
+    && mv ${YOCTO_DIR}/build/tmp/deploy/images/.old ${YOCTO_DIR}/build/tmp/deploy/images/old; \
     # Run rest of commands as new user
-    && runuser ${USER} -p -c \
+    runuser ${USERNAME} -p -c \
         # Source oe-init-build-env from poky
         "cd ${YOCTO_DIR} && source ${YOCTO_DIR}/poky/oe-init-build-env build \
         # Apply local.conf changes to set bitbake MACHINE variable
@@ -78,4 +86,4 @@ CMD \
         # Pre-fetch openjdk to prevent race-condition in openjdk-8 recipe
         && bitbake -c fetch openjdk-8 && bitbake -c fetch openjdk-8-native \
         # Build image
-        && bitbake -u knotty ${IMAGE}"
+        && bitbake ${IMAGE}"
