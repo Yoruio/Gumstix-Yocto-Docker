@@ -33,13 +33,25 @@ RUN curl http://commondatastorage.googleapis.com/git-repo-downloads/repo > repo
 RUN chmod a+x repo
 RUN mv repo /usr/local/bin
 
+# misc utils
+COPY runbb /usr/local/bin
+RUN chmod a+x /usr/local/bin/runbb
+
+COPY create_user /usr/local/bin
+RUN chmod a+x /usr/local/bin/create_user
+
+COPY backup_images /usr/local/bin
+RUN chmod a+x /usr/local/bin/backup_images
+
 # Create yocto directory
 RUN mkdir -p ${YOCTO_DIR}/
 WORKDIR ${YOCTO_DIR}
 
-# Use my layers - TODO: pull request for official gumstix layers
+# Pull poky layers, initiate conf/ - TODO: pull request for official gumstix layers
 RUN repo init -u git://github.com/yoruio/yocto-manifest.git -b Yoruio-layers
 RUN repo sync
+ENV TEMPLATECONF=meta-gumstix-extras/conf
+RUN source poky/oe-init-build-env build
 
 # Disable sanity check to allow building as root - required if building as root
 # RUN sed -i 's/INHERIT += "sanity"/#INHERIT += "sanity"/g' poky/meta/conf/sanity.conf
@@ -48,12 +60,11 @@ RUN repo sync
 RUN rm /usr/bin/python
 RUN ln -s /usr/bin/python2 /usr/bin/python
 
-# Set environment variables for bitbake
-ENV TEMPLATECONF=meta-gumstix-extras/conf
+# Variables defined in local.conf
 ENV MACHINE=raspberrypi4-64
 ENV IMAGE=gumstix-console-image
 
-# default UID and GID values - set in docker run using '-e' flag (i.e. docker run -e UID=$(id -u) yocto-build-env:latest)
+# Default UID and GID values - set in docker run using '-e' flag (i.e. docker run -e UID=$(id -u) yocto-build-env:latest)
 ENV UID=1001
 ENV GID=1001
 
@@ -63,27 +74,13 @@ ENV GROUP=yocto
 # build command
 CMD \
     # New user creation and permission changes
-    groupadd -g ${GID} ${GROUP} \
-    && useradd -g ${GID} -m -s /bin/bash -u ${UID} ${USERNAME} \
-    && chown -R ${USERNAME}:${GROUP} ${YOCTO_DIR}; \
+    create_user; \
     # move any old images into timestamped folder (with time of new compile)
-    DATETIME=$(date +%Y%m%d_%H%M%S) \
-    && mkdir -p ${YOCTO_DIR}/build/tmp/deploy/images/old/${DATETIME} \
-    && chown -R ${USERNAME}:${GROUP} ${YOCTO_DIR}/build/tmp/deploy/images/old \
-    && mv ${YOCTO_DIR}/build/tmp/deploy/images/old ${YOCTO_DIR}/build/tmp/deploy/images/.old \
-    && if [ "$(ls ${YOCTO_DIR}/build/tmp/deploy/images/)" ]; \
-        then mv ${YOCTO_DIR}/build/tmp/deploy/images/* ${YOCTO_DIR}/build/tmp/deploy/images/.old/${DATETIME}/ ; \
-        else rm -r ${YOCTO_DIR}/build/tmp/deploy/images/.old/${DATETIME} ; \
-    fi \
-    && mv ${YOCTO_DIR}/build/tmp/deploy/images/.old ${YOCTO_DIR}/build/tmp/deploy/images/old; \
+    backup_images; \
     # Run rest of commands as new user
-    runuser ${USERNAME} -p -c \
-        # Source oe-init-build-env from poky
-        "cd ${YOCTO_DIR} && source ${YOCTO_DIR}/poky/oe-init-build-env build \
+    runuser ${USERNAME} -p -c "\
         # Apply local.conf changes to set bitbake MACHINE variable
-        && sed -i 's/^COMPATIBLE_MACHINE_overo = \"overo\"/#COMPATIBLE_MACHINE_overo = \"overo\"/g' ${YOCTO_DIR}/build/conf/local.conf \
-        && sed -i 's/^MACHINE ?= \"overo\"/#MACHINE ?= \"overo\"\nMACHINE ?= \"'\"${MACHINE}\"'\"/g' ${YOCTO_DIR}/build/conf/local.conf \
+        sed -i 's/^COMPATIBLE_MACHINE_overo = \"overo\"/#COMPATIBLE_MACHINE_overo = \"overo\"/g' ${YOCTO_DIR}/build/conf/local.conf \
+        && sed -i 's/^MACHINE ?= \"overo\"/#MACHINE ?= \"overo\"\nMACHINE ?= \"'\"${MACHINE}\"'\"/g' ${YOCTO_DIR}/build/conf/local.conf; \
         # Pre-fetch openjdk to prevent race-condition in openjdk-8 recipe
-        && bitbake -c fetch openjdk-8 && bitbake -c fetch openjdk-8-native \
-        # Build image
-        && bitbake ${IMAGE}"
+        runbb ${IMAGE}"

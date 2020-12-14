@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ $# -eq 1 ]
+then
+    IMAGE=$1
+fi
+
+cd ${YOCTO_DIR} && source ${YOCTO_DIR}/poky/oe-init-build-env build
+bitbake -c fetch openjdk-8 openjdk-8-native
+bitbake ${IMAGE}
