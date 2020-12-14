@@ -76,7 +76,7 @@ $ docker run -it --entrypoint=/bin/bash \
 Prepare images directory and switch to correct user for yocto build:
 ```sh
 $ create_user && backup_images
-$ su - yocto
+$ su - -m yocto
 ```
 At this point, make any changes to yocto as necessary (new recipes, different sources, etc). Remember to also make necessary changes in `/yocto/build/conf/local.conf`, particularly the `MACHINE` variable if you are not building for the Overo.
 
