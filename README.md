@@ -1,5 +1,5 @@
 ***
-*NOTE:* THIS REPO IS NOT UP TO DATE. SEE [gumstix/yocto-docker](https://github.com/gumstix/yocto-docker) instead.
+**NOTE:** THIS REPOSITORY IS NOT UP TO DATE. SEE [gumstix/yocto-docker](https://github.com/gumstix/yocto-docker) instead.
 ***
 
 # Gumstix-Yocto-Docker
