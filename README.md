@@ -1,3 +1,7 @@
+***
+**NOTE:** THIS REPOSITORY IS NOT UP TO DATE. SEE [gumstix/yocto-docker](https://github.com/gumstix/yocto-docker) instead.
+***
+
 # Gumstix-Yocto-Docker
 This is a Docker image to build gumstix Yocto images in a controlled Linux environment. This image is based on Ubuntu 18.04, using the repo manifest found at https://github.com/Yoruio/yocto-manifest/tree/Yoruio-layers. Current image builds the Dunfell branch of Gumstix images.
 
